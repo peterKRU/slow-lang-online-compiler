@@ -1,0 +1,21 @@
+@import url('./main-layout.css');
+@import url('./views/compiler-view.css');
+@import url('line-awesome/dist/line-awesome/css/line-awesome.min.css');
+    [theme~="dark"] {
+      --lumo-shade-5pct: hsla(175, 53%, 45%, 0.05);
+      --lumo-shade-10pct: hsla(175, 53%, 45%, 0.1);
+      --lumo-shade-20pct: hsla(175, 53%, 45%, 0.2);
+      --lumo-shade-30pct: hsla(175, 53%, 45%, 0.3);
+      --lumo-shade-40pct: hsla(175, 53%, 45%, 0.4);
+      --lumo-shade-50pct: hsla(175, 53%, 45%, 0.5);
+      --lumo-shade-60pct: hsla(175, 53%, 45%, 0.6);
+      --lumo-shade-70pct: hsla(175, 53%, 45%, 0.7);
+      --lumo-shade-80pct: hsla(175, 53%, 45%, 0.8);
+      --lumo-shade-90pct: hsla(175, 53%, 45%, 0.9);
+      --lumo-primary-color-50pct: hsla(214, 0%, 88%, 0.5);
+      --lumo-primary-color-10pct: hsla(214, 0%, 88%, 0.1);
+      --lumo-shade: hsla(175, 53%, 45%, 0.47);
+      --lumo-primary-color: hsl(214, 0%, 88%);
+      --lumo-base-color: hsl(210, 76%, 10%);
+
+    }

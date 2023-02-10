@@ -1,0 +1,19 @@
+@media screen and (max-width: 740px) {
+ .compiler-view {
+    flex-direction: column-reverse;
+  }
+ .compiler-view aside {
+    width: 100% !important;
+    flex-direction: row;
+  }
+ .compiler-view aside header {
+    display: none;
+  }
+ .compiler-view aside vaadin-tabs {
+    flex: 1 1 auto;
+    overflow: auto;
+  }
+ .compiler-view aside vaadin-tabs vaadin-tab.justify-between {
+    justify-content: flex-start;
+  }
+}
