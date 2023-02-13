@@ -7,10 +7,16 @@ import com.vaadin.collaborationengine.CollaborationMessageList;
 import com.vaadin.collaborationengine.MessageManager;
 import com.vaadin.collaborationengine.UserInfo;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Aside;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.page.Page;
@@ -31,6 +37,11 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Overflow;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.Width;
+
+import de.f0rce.ace.AceEditor;
+import de.f0rce.ace.enums.AceMode;
+import de.f0rce.ace.enums.AceTheme;
+
 import java.util.UUID;
 
 @PageTitle("Compiler")
@@ -93,15 +104,31 @@ public class CompilerView extends HorizontalLayout {
     public CompilerView() {
         addClassNames("compiler-view", Width.FULL, Display.FLEX, Flex.AUTO);
         setSpacing(false);
-
-        // UserInfo is used by Collaboration Engine and is used to share details
+        
+        H3 codeEditorHeader = new H3("Code Editor");
+        
+        MenuBar compilerCommandBar = new MenuBar();
+        compilerCommandBar.addItem("Compile");
+        compilerCommandBar.addItem("Test");
+                
+    	AceEditor codeEditor = new AceEditor();
+    	codeEditor.setTheme(AceTheme.terminal);
+    	codeEditor.setMode(AceMode.sql);
+    	codeEditor.setValue("SELECT * FROM DB_01 WHERE ID = 123");
+    	codeEditor.setSizeFull();    	
+    	
+    	VerticalLayout codeEditorLayout = new VerticalLayout(codeEditorHeader, compilerCommandBar, codeEditor);
+    	add(codeEditorLayout);
+        
+    	// UserInfo is used by Collaboration Engine and is used to share details
         // of users to each other to able collaboration. Replace this with
         // information about the actual user that is logged, providing a user
         // identifier, and the user's real name. You can also provide the users
         // avatar by passing an url to the image as a third parameter, or by
         // configuring an `ImageProvider` to `avatarGroup`.
-        UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "Steve Lange");
-
+        //UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "Steve Lange");
+    	UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "SlowLang");
+        
         tabs = new Tabs();
         for (ChatInfo chat : chats) {
             // Listen for new messages in each chat so we can update the "unread" count
@@ -116,7 +143,7 @@ public class CompilerView extends HorizontalLayout {
         }
         tabs.setOrientation(Orientation.VERTICAL);
         tabs.addClassNames(Flex.GROW, Flex.SHRINK, Overflow.HIDDEN);
-
+        
         // CollaborationMessageList displays messages that are in a
         // Collaboration Engine topic. You should give in the user details of
         // the current user using the component, and a topic Id. Topic id can be
@@ -133,8 +160,14 @@ public class CompilerView extends HorizontalLayout {
         input.setWidthFull();
 
         // Layouting
-
-        VerticalLayout chatContainer = new VerticalLayout();
+        
+        H3 outputAreaHeader = new H3("Output Area");
+        
+        MenuBar outputAreaCommandBar = new MenuBar();
+        outputAreaCommandBar.addItem("Run");
+        outputAreaCommandBar.addItem("Debug");
+        
+        VerticalLayout chatContainer = new VerticalLayout(outputAreaHeader, outputAreaCommandBar);
         chatContainer.addClassNames(Flex.AUTO, Overflow.HIDDEN);
 
         Aside side = new Aside();
@@ -154,10 +187,11 @@ public class CompilerView extends HorizontalLayout {
         side.add(header, tabs);
 
         chatContainer.add(list, input);
-        add(chatContainer, side);
+        chatContainer.addClassName("bg-contrast-5");
+        add(chatContainer);
         setSizeFull();
         expand(list);
-
+        
         // Change the topic id of the chat when a new tab is selected
         tabs.addSelectedChangeListener(event -> {
             currentChat = ((ChatTab) event.getSelectedTab()).getChatInfo();
