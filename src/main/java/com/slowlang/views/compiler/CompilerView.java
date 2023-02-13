@@ -132,7 +132,9 @@ public class CompilerView extends HorizontalLayout {
         tabs = new Tabs();
         for (ChatInfo chat : chats) {
             // Listen for new messages in each chat so we can update the "unread" count
-            MessageManager mm = new MessageManager(this, userInfo, chat.getCollaborationTopic());
+            System.out.println("ololo");
+            System.out.println("ololo");
+        	MessageManager mm = new MessageManager(this, userInfo, chat.getCollaborationTopic());
             mm.setMessageHandler(context -> {
                 if (currentChat != chat) {
                     chat.incrementUnread();
