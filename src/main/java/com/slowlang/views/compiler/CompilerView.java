@@ -3,8 +3,10 @@ package com.slowlang.views.compiler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import com.slowlang.service.CompilerService;
 import com.slowlang.service.ExecutionEngineService;
@@ -70,8 +72,6 @@ public class CompilerView extends HorizontalLayout {
 	
 	private CompilerService compilerService;
 	private ExecutionEngineService executionEngineService;
-	private ProgressBar editorProgressBar = new ProgressBar();
-	private ProgressBar chatProgressBar = new ProgressBar();
 	
     public static class ChatTab extends Tab {
         
@@ -135,11 +135,7 @@ public class CompilerView extends HorizontalLayout {
         
         H3 codeEditorHeader = new H3("Code Editor");
         
-    	editorProgressBar.setIndeterminate(true);
-    	editorProgressBar.setVisible(false);
-    	editorProgressBar.setWidth("650px");
-    	
-        HorizontalLayout editorHeaderLayout = new HorizontalLayout(codeEditorHeader, editorProgressBar);
+        HorizontalLayout editorHeaderLayout = new HorizontalLayout(codeEditorHeader);
         editorHeaderLayout.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
     	
         MenuBar compilerCommandBar = new MenuBar();
@@ -156,7 +152,7 @@ public class CompilerView extends HorizontalLayout {
     	codeEditor.setValue("Mockup code");
     	codeEditor.setSizeFull(); 
         
-    	VerticalLayout codeEditorLayout = new VerticalLayout(editorHeaderLayout, compilerCommandBar, codeEditor);
+    	VerticalLayout codeEditorLayout = new VerticalLayout(codeEditorHeader, compilerCommandBar, codeEditor);
     	add(codeEditorLayout);
     	
     	UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "User");
@@ -178,7 +174,11 @@ public class CompilerView extends HorizontalLayout {
             	
             	if(user.getName().equals("User")) {
             		
-            		botMessageManager.submit("Mockup server response");
+            		CompletableFuture<String> futureResponse = CompletableFuture.supplyAsync(() -> executionEngineService.execute(null));
+            		futureResponse.thenAccept(response -> {
+            			
+            			botMessageManager.submit(response);
+            		});
             	}
             	
             	Notification.show(user.getName() + ": " + text);
@@ -202,13 +202,6 @@ public class CompilerView extends HorizontalLayout {
         
         H3 chatAreaHeader = new H3("Output Area");
         
-    	editorProgressBar.setIndeterminate(true);
-    	editorProgressBar.setVisible(false);
-    	editorProgressBar.setWidth("650px");
-        
-    	HorizontalLayout chatHeaderLayout = new HorizontalLayout(chatAreaHeader, editorProgressBar); 
-    	chatHeaderLayout.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
-    	
         MenuBar chatAreaCommandBar = new MenuBar();
         chatAreaCommandBar.addItem("Run");
         chatAreaCommandBar.addItem("Debug");
@@ -217,19 +210,13 @@ public class CompilerView extends HorizontalLayout {
         chatAreaCommandBar.addItem("Mockup Button");
         chatAreaCommandBar.addItem("Mockup Button");
         
-        VerticalLayout chatContainer = new VerticalLayout(chatHeaderLayout, chatAreaCommandBar);
+        VerticalLayout chatContainer = new VerticalLayout(chatAreaHeader, chatAreaCommandBar);
         chatContainer.addClassNames(Flex.AUTO, Overflow.HIDDEN);
         chatContainer.add(list, input);
         chatContainer.addClassName("bg-contrast-5");
         add(chatContainer);
         setSizeFull();
         expand(list);
-    }
-    
-    private void compile(String sourceCode) {
-    	
-    	compilerService.compile(sourceCode);
-    	Notification.show("Compiling...");
     }
     
     private ChatTab createTab(ChatInfo chat) {
