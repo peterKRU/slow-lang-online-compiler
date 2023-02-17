@@ -1,31 +1,47 @@
 package com.slowlang.views.compiler;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.scheduling.annotation.Async;
+
 import com.slowlang.views.MainLayout;
+import com.vaadin.collaborationengine.AbstractCollaborationManager.ActivationHandler;
 import com.vaadin.collaborationengine.CollaborationAvatarGroup;
+import com.vaadin.collaborationengine.CollaborationMessage;
 import com.vaadin.collaborationengine.CollaborationMessageInput;
 import com.vaadin.collaborationengine.CollaborationMessageList;
+import com.vaadin.collaborationengine.MessageHandler;
 import com.vaadin.collaborationengine.MessageManager;
 import com.vaadin.collaborationengine.UserInfo;
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.html.Aside;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.page.Page;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
+import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.server.Command;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
 import com.vaadin.flow.theme.lumo.LumoUtility.BoxSizing;
@@ -42,15 +58,17 @@ import de.f0rce.ace.AceEditor;
 import de.f0rce.ace.enums.AceMode;
 import de.f0rce.ace.enums.AceTheme;
 
-import java.util.UUID;
 
 @PageTitle("Compiler")
 @Route(value = "compiler", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 public class CompilerView extends HorizontalLayout {
-
+	
     public static class ChatTab extends Tab {
-        private final ChatInfo chatInfo;
+        
+    	public MessageManager testManager = null;
+    	
+    	private final ChatInfo chatInfo;
 
         public ChatTab(ChatInfo chatInfo) {
             this.chatInfo = chatInfo;
@@ -101,6 +119,8 @@ public class CompilerView extends HorizontalLayout {
     private ChatInfo currentChat = chats[0];
     private Tabs tabs;
 
+    public MessageManager testManager = null;
+    
     public CompilerView() {
         addClassNames("compiler-view", Width.FULL, Display.FLEX, Flex.AUTO);
         setSpacing(false);
@@ -110,68 +130,77 @@ public class CompilerView extends HorizontalLayout {
         MenuBar compilerCommandBar = new MenuBar();
         compilerCommandBar.addItem("Compile");
         compilerCommandBar.addItem("Test");
-                
-    	AceEditor codeEditor = new AceEditor();
+        compilerCommandBar.addItem("Mockup Button");
+        compilerCommandBar.addItem("Mockup Button");
+        compilerCommandBar.addItem("Mockup Button");
+        compilerCommandBar.addItem("Mockup Button");
+        
+        AceEditor codeEditor = new AceEditor();
+    	
     	codeEditor.setTheme(AceTheme.terminal);
     	codeEditor.setMode(AceMode.sql);
-    	codeEditor.setValue("SELECT * FROM DB_01 WHERE ID = 123");
-    	codeEditor.setSizeFull();    	
-    	
+    	codeEditor.setValue("Mockup code");
+    	codeEditor.setSizeFull(); 
+        
     	VerticalLayout codeEditorLayout = new VerticalLayout(codeEditorHeader, compilerCommandBar, codeEditor);
     	add(codeEditorLayout);
-        
-    	// UserInfo is used by Collaboration Engine and is used to share details
-        // of users to each other to able collaboration. Replace this with
-        // information about the actual user that is logged, providing a user
-        // identifier, and the user's real name. You can also provide the users
-        // avatar by passing an url to the image as a third parameter, or by
-        // configuring an `ImageProvider` to `avatarGroup`.
-        //UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "Steve Lange");
-    	UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "SlowLang");
-        
-        tabs = new Tabs();
+    	
+    	codeEditorLayout.setPadding(true);
+    	
+    	UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "User");
+    	UserInfo botInfo = new UserInfo(UUID.randomUUID().toString(), "SlowLang Bot");
+    	
+    	tabs = new Tabs();
         for (ChatInfo chat : chats) {
-            // Listen for new messages in each chat so we can update the "unread" count
-            System.out.println("ololo");
-            System.out.println("ololo");
-        	MessageManager mm = new MessageManager(this, userInfo, chat.getCollaborationTopic());
-            mm.setMessageHandler(context -> {
-                if (currentChat != chat) {
+        	
+        	MessageManager userMessageManager = new MessageManager(this, userInfo, chat.getCollaborationTopic());
+        	MessageManager botMessageManager = new MessageManager(this, botInfo, chat.getCollaborationTopic());
+        	
+        	userMessageManager.setMessageHandler(context -> {
+                
+            	CollaborationMessage message = context.getMessage();
+            	UserInfo user = message.getUser();
+            	String text = message.getText();
+            	
+            	if(user.getName().equals("User")) {
+            		
+            		botMessageManager.submit("Mockup server response");
+            	}
+            	
+            	Notification.show(user.getName() + ": " + text);
+            	
+            	if (currentChat != chat) {
                     chat.incrementUnread();
                 }
             });
-
+        	
             tabs.add(createTab(chat));
         }
+        
         tabs.setOrientation(Orientation.VERTICAL);
         tabs.addClassNames(Flex.GROW, Flex.SHRINK, Overflow.HIDDEN);
         
-        // CollaborationMessageList displays messages that are in a
-        // Collaboration Engine topic. You should give in the user details of
-        // the current user using the component, and a topic Id. Topic id can be
-        // any freeform string. In this template, we have used the format
-        // "chat/#general".
         CollaborationMessageList list = new CollaborationMessageList(userInfo, currentChat.getCollaborationTopic());
         list.setSizeFull();
-
-        // `CollaborationMessageInput is a textfield and button, to be able to
-        // submit new messages. To avoid having to set the same info into both
-        // the message list and message input, the input takes in the list as an
-        // constructor argument to get the information from there.
+        
         CollaborationMessageInput input = new CollaborationMessageInput(list);
         input.setWidthFull();
-
-        // Layouting
         
-        H3 outputAreaHeader = new H3("Output Area");
+        H3 chatAreaHeader = new H3("Output Area");
         
-        MenuBar outputAreaCommandBar = new MenuBar();
-        outputAreaCommandBar.addItem("Run");
-        outputAreaCommandBar.addItem("Debug");
+        MenuBar chatAreaCommandBar = new MenuBar();
+        chatAreaCommandBar.addItem("Run");
+        chatAreaCommandBar.addItem("Debug");
+        chatAreaCommandBar.addItem("Mockup Button");
+        chatAreaCommandBar.addItem("Mockup Button");
+        chatAreaCommandBar.addItem("Mockup Button");
+        chatAreaCommandBar.addItem("Mockup Button");
         
-        VerticalLayout chatContainer = new VerticalLayout(outputAreaHeader, outputAreaCommandBar);
+        chatAreaCommandBar.addThemeVariants(MenuBarVariant.MATERIAL_OUTLINED);
+        
+        VerticalLayout chatContainer = new VerticalLayout(chatAreaHeader, chatAreaCommandBar);
         chatContainer.addClassNames(Flex.AUTO, Overflow.HIDDEN);
-
+        
         Aside side = new Aside();
         side.addClassNames(Display.FLEX, FlexDirection.COLUMN, Flex.GROW_NONE, Flex.SHRINK_NONE, Background.CONTRAST_5);
         side.setWidth("18rem");
@@ -187,8 +216,10 @@ public class CompilerView extends HorizontalLayout {
         header.add(channels, avatarGroup);
 
         side.add(header, tabs);
-
+        
         chatContainer.add(list, input);
+
+        
         chatContainer.addClassName("bg-contrast-5");
         add(chatContainer);
         setSizeFull();
@@ -201,7 +232,13 @@ public class CompilerView extends HorizontalLayout {
             list.setTopic(currentChat.getCollaborationTopic());
         });
     }
-
+    
+    @Async
+    private void send(MessageManager testManager, String message) {
+    	
+    	testManager.submit(message);
+    }
+    
     private ChatTab createTab(ChatInfo chat) {
         ChatTab tab = new ChatTab(chat);
         tab.addClassNames(JustifyContent.BETWEEN);
