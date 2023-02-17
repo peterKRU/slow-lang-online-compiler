@@ -121,8 +121,7 @@ public class CompilerView extends HorizontalLayout {
         }
     }
 
-    private ChatInfo[] chats = new ChatInfo[]{new ChatInfo("general", 0), new ChatInfo("support", 0),
-            new ChatInfo("casual", 0)};
+    private ChatInfo[] chats = new ChatInfo[]{new ChatInfo("slow-lang-bot", 0)};
     private ChatInfo currentChat = chats[0];
     private Tabs tabs;
 
@@ -168,6 +167,8 @@ public class CompilerView extends HorizontalLayout {
         	
         	MessageManager userMessageManager = new MessageManager(this, userInfo, chat.getCollaborationTopic());
         	MessageManager botMessageManager = new MessageManager(this, botInfo, chat.getCollaborationTopic());
+        	
+        	botMessageManager.submit("Default mockup message");
         	
         	userMessageManager.setMessageHandler(context -> {
                 
@@ -216,40 +217,13 @@ public class CompilerView extends HorizontalLayout {
         chatAreaCommandBar.addItem("Mockup Button");
         chatAreaCommandBar.addItem("Mockup Button");
         
-        chatAreaCommandBar.addThemeVariants(MenuBarVariant.MATERIAL_OUTLINED);
-        
         VerticalLayout chatContainer = new VerticalLayout(chatHeaderLayout, chatAreaCommandBar);
         chatContainer.addClassNames(Flex.AUTO, Overflow.HIDDEN);
-        
-        Aside side = new Aside();
-        side.addClassNames(Display.FLEX, FlexDirection.COLUMN, Flex.GROW_NONE, Flex.SHRINK_NONE, Background.CONTRAST_5);
-        side.setWidth("18rem");
-        Header header = new Header();
-        header.addClassNames(Display.FLEX, FlexDirection.ROW, Width.FULL, AlignItems.CENTER, Padding.MEDIUM,
-                BoxSizing.BORDER);
-        H3 channels = new H3("Channels");
-        channels.addClassNames(Flex.GROW, Margin.NONE);
-        CollaborationAvatarGroup avatarGroup = new CollaborationAvatarGroup(userInfo, "chat");
-        avatarGroup.setMaxItemsVisible(4);
-        avatarGroup.addClassNames(Width.AUTO);
-
-        header.add(channels, avatarGroup);
-
-        side.add(header, tabs);
-        
         chatContainer.add(list, input);
-
-        
         chatContainer.addClassName("bg-contrast-5");
         add(chatContainer);
         setSizeFull();
         expand(list);
-        
-        tabs.addSelectedChangeListener(event -> {
-            currentChat = ((ChatTab) event.getSelectedTab()).getChatInfo();
-            currentChat.resetUnread();
-            list.setTopic(currentChat.getCollaborationTopic());
-        });
     }
     
     private void compile(String sourceCode) {
