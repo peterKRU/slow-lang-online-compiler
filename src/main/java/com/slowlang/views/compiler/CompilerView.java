@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.springframework.scheduling.annotation.Async;
 
+import com.slowlang.service.CompilerService;
+import com.slowlang.service.ExecutionEngineService;
 import com.slowlang.views.MainLayout;
 import com.vaadin.collaborationengine.AbstractCollaborationManager.ActivationHandler;
 import com.vaadin.collaborationengine.CollaborationAvatarGroup;
@@ -16,6 +18,7 @@ import com.vaadin.collaborationengine.MessageHandler;
 import com.vaadin.collaborationengine.MessageManager;
 import com.vaadin.collaborationengine.UserInfo;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.HasText.WhiteSpace;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.contextmenu.MenuItem;
@@ -32,6 +35,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.page.Page;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
@@ -64,10 +68,13 @@ import de.f0rce.ace.enums.AceTheme;
 @RouteAlias(value = "", layout = MainLayout.class)
 public class CompilerView extends HorizontalLayout {
 	
+	private CompilerService compilerService;
+	private ExecutionEngineService executionEngineService;
+	private ProgressBar editorProgressBar = new ProgressBar();
+	private ProgressBar chatProgressBar = new ProgressBar();
+	
     public static class ChatTab extends Tab {
         
-    	public MessageManager testManager = null;
-    	
     	private final ChatInfo chatInfo;
 
         public ChatTab(ChatInfo chatInfo) {
@@ -119,14 +126,23 @@ public class CompilerView extends HorizontalLayout {
     private ChatInfo currentChat = chats[0];
     private Tabs tabs;
 
-    public MessageManager testManager = null;
-    
-    public CompilerView() {
-        addClassNames("compiler-view", Width.FULL, Display.FLEX, Flex.AUTO);
+    public CompilerView(CompilerService compilerService, ExecutionEngineService executionEngineService) {
+        
+    	this.compilerService = compilerService;
+    	this.executionEngineService = executionEngineService;
+    	
+    	addClassNames("compiler-view", Width.FULL, Display.FLEX, Flex.AUTO);
         setSpacing(false);
         
         H3 codeEditorHeader = new H3("Code Editor");
         
+    	editorProgressBar.setIndeterminate(true);
+    	editorProgressBar.setVisible(false);
+    	editorProgressBar.setWidth("650px");
+    	
+        HorizontalLayout editorHeaderLayout = new HorizontalLayout(codeEditorHeader, editorProgressBar);
+        editorHeaderLayout.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
+    	
         MenuBar compilerCommandBar = new MenuBar();
         compilerCommandBar.addItem("Compile");
         compilerCommandBar.addItem("Test");
@@ -136,16 +152,13 @@ public class CompilerView extends HorizontalLayout {
         compilerCommandBar.addItem("Mockup Button");
         
         AceEditor codeEditor = new AceEditor();
-    	
     	codeEditor.setTheme(AceTheme.terminal);
     	codeEditor.setMode(AceMode.sql);
     	codeEditor.setValue("Mockup code");
     	codeEditor.setSizeFull(); 
         
-    	VerticalLayout codeEditorLayout = new VerticalLayout(codeEditorHeader, compilerCommandBar, codeEditor);
+    	VerticalLayout codeEditorLayout = new VerticalLayout(editorHeaderLayout, compilerCommandBar, codeEditor);
     	add(codeEditorLayout);
-    	
-    	codeEditorLayout.setPadding(true);
     	
     	UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "User");
     	UserInfo botInfo = new UserInfo(UUID.randomUUID().toString(), "SlowLang Bot");
@@ -188,6 +201,13 @@ public class CompilerView extends HorizontalLayout {
         
         H3 chatAreaHeader = new H3("Output Area");
         
+    	editorProgressBar.setIndeterminate(true);
+    	editorProgressBar.setVisible(false);
+    	editorProgressBar.setWidth("650px");
+        
+    	HorizontalLayout chatHeaderLayout = new HorizontalLayout(chatAreaHeader, editorProgressBar); 
+    	chatHeaderLayout.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
+    	
         MenuBar chatAreaCommandBar = new MenuBar();
         chatAreaCommandBar.addItem("Run");
         chatAreaCommandBar.addItem("Debug");
@@ -198,7 +218,7 @@ public class CompilerView extends HorizontalLayout {
         
         chatAreaCommandBar.addThemeVariants(MenuBarVariant.MATERIAL_OUTLINED);
         
-        VerticalLayout chatContainer = new VerticalLayout(chatAreaHeader, chatAreaCommandBar);
+        VerticalLayout chatContainer = new VerticalLayout(chatHeaderLayout, chatAreaCommandBar);
         chatContainer.addClassNames(Flex.AUTO, Overflow.HIDDEN);
         
         Aside side = new Aside();
@@ -225,7 +245,6 @@ public class CompilerView extends HorizontalLayout {
         setSizeFull();
         expand(list);
         
-        // Change the topic id of the chat when a new tab is selected
         tabs.addSelectedChangeListener(event -> {
             currentChat = ((ChatTab) event.getSelectedTab()).getChatInfo();
             currentChat.resetUnread();
@@ -233,10 +252,10 @@ public class CompilerView extends HorizontalLayout {
         });
     }
     
-    @Async
-    private void send(MessageManager testManager, String message) {
+    private void compile(String sourceCode) {
     	
-    	testManager.submit(message);
+    	compilerService.compile(sourceCode);
+    	Notification.show("Compiling...");
     }
     
     private ChatTab createTab(ChatInfo chat) {
