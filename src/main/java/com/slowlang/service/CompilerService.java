@@ -2,20 +2,15 @@ package com.slowlang.service;
 
 import org.springframework.stereotype.Service;
 
+import compiler.Compiler;
+
 @Service
 public class CompilerService {
 	
-	public boolean compile(String sourceCode) {
+	public byte[] compile(String sourceCode) {
 		
-		try {
-			
-			Thread.sleep(2000);
+		Compiler compiler = new Compiler();
 		
-		} catch (InterruptedException e) {
-			
-			e.printStackTrace();
-		}
-		
-		return true;
+		return compiler.compile(sourceCode, Constants.DEFAULT_PROGRAM_NAME);
 	}
 }
