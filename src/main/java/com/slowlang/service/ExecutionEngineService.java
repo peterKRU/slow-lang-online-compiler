@@ -19,6 +19,8 @@ public class ExecutionEngineService {
 		
 		List<String> log = ChainedVM.logger.getLog();
 		
+		System.out.println(log.toString());
+		
 		return log.toString();
 	}
 	
