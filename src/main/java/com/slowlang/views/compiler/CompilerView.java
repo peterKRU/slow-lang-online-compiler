@@ -1,63 +1,37 @@
 package com.slowlang.views.compiler;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.util.concurrent.ListenableFuture;
-
+import com.slowlang.service.BotService;
 import com.slowlang.service.CompilerService;
 import com.slowlang.service.ExecutionEngineService;
+import com.slowlang.service.Request;
+import com.slowlang.service.Requests;
 import com.slowlang.views.MainLayout;
-import com.vaadin.collaborationengine.AbstractCollaborationManager.ActivationHandler;
-import com.vaadin.collaborationengine.CollaborationAvatarGroup;
 import com.vaadin.collaborationengine.CollaborationMessage;
 import com.vaadin.collaborationengine.CollaborationMessageInput;
 import com.vaadin.collaborationengine.CollaborationMessageList;
-import com.vaadin.collaborationengine.MessageHandler;
 import com.vaadin.collaborationengine.MessageManager;
 import com.vaadin.collaborationengine.UserInfo;
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.HasText.WhiteSpace;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.contextmenu.MenuItem;
-import com.vaadin.flow.component.html.Aside;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
-import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.page.Page;
-import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tabs.Orientation;
-import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
-import com.vaadin.flow.server.Command;
-import com.vaadin.flow.server.VaadinSession;
-import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
-import com.vaadin.flow.theme.lumo.LumoUtility.Background;
-import com.vaadin.flow.theme.lumo.LumoUtility.BoxSizing;
 import com.vaadin.flow.theme.lumo.LumoUtility.Display;
 import com.vaadin.flow.theme.lumo.LumoUtility.Flex;
-import com.vaadin.flow.theme.lumo.LumoUtility.FlexDirection;
 import com.vaadin.flow.theme.lumo.LumoUtility.JustifyContent;
-import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Overflow;
-import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
 import de.f0rce.ace.AceEditor;
@@ -70,8 +44,7 @@ import de.f0rce.ace.enums.AceTheme;
 @RouteAlias(value = "", layout = MainLayout.class)
 public class CompilerView extends HorizontalLayout {
 	
-	private CompilerService compilerService;
-	private ExecutionEngineService executionEngineService;
+	private BotService botService;
 	
     public static class ChatTab extends Tab {
         
@@ -125,10 +98,9 @@ public class CompilerView extends HorizontalLayout {
     private ChatInfo currentChat = chats[0];
     private Tabs tabs;
 
-    public CompilerView(CompilerService compilerService, ExecutionEngineService executionEngineService) {
+    public CompilerView(BotService botService) {
         
-    	this.compilerService = compilerService;
-    	this.executionEngineService = executionEngineService;
+    	this.botService = botService;
     	
     	addClassNames("compiler-view", Width.FULL, Display.FLEX, Flex.AUTO);
         setSpacing(false);
@@ -174,11 +146,17 @@ public class CompilerView extends HorizontalLayout {
             	
             	if(user.getName().equals("User")) {
             		
-            		CompletableFuture<String> futureResponse = CompletableFuture.supplyAsync(() -> executionEngineService.execute(null));
+            		String sourceCode = codeEditor.getValue();
+            		Request userRequest = new Request(sourceCode, text, Requests.types);
+            		
+            		System.out.println("command: " + text.equals(Requests.COMPILE_AND_RUN));
+            		
+            		CompletableFuture<String> futureResponse = CompletableFuture.supplyAsync(() -> botService.handleRequest(userRequest));
             		futureResponse.thenAccept(response -> {
             			
             			botMessageManager.submit(response);
             		});
+
             	}
             	
             	Notification.show(user.getName() + ": " + text);
@@ -220,7 +198,8 @@ public class CompilerView extends HorizontalLayout {
     }
     
     private ChatTab createTab(ChatInfo chat) {
-        ChatTab tab = new ChatTab(chat);
+        
+    	ChatTab tab = new ChatTab(chat);
         tab.addClassNames(JustifyContent.BETWEEN);
 
         Span badge = new Span();
