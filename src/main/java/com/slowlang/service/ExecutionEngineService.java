@@ -9,19 +9,16 @@ import execution_engine.MemoryManager;
 
 @Service
 public class ExecutionEngineService {
-	
-	
+
 	public String execute(byte[] programBytes) {
-		
+
 		MemoryManager memoryManager = new MemoryManager(programBytes, Constants.DEFAULT_PROGRAM_NAME);
 		ChainedVM vm = new ChainedVM(memoryManager);
 		vm.executeProgram();
-		
+
 		List<String> log = ChainedVM.logger.getLog();
-		
-		System.out.println(log.toString());
-		
+
 		return log.toString();
 	}
-	
+
 }
