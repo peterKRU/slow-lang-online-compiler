@@ -9,14 +9,19 @@ import com.slowlang.service.ExecutionEngineService;
 import com.slowlang.service.Request;
 import com.slowlang.service.Requests;
 import com.slowlang.views.MainLayout;
+import com.slowlang.views.UIConstants;
 import com.vaadin.collaborationengine.CollaborationMessage;
 import com.vaadin.collaborationengine.CollaborationMessageInput;
 import com.vaadin.collaborationengine.CollaborationMessageList;
 import com.vaadin.collaborationengine.MessageManager;
 import com.vaadin.collaborationengine.UserInfo;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -39,11 +44,13 @@ import de.f0rce.ace.enums.AceMode;
 import de.f0rce.ace.enums.AceTheme;
 
 
+@SuppressWarnings("serial")
 @PageTitle("Compiler")
 @Route(value = "compiler", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 public class CompilerView extends HorizontalLayout {
 	
+	@SuppressWarnings("unused")
 	private BotService botService;
 	
     public static class ChatTab extends Tab {
@@ -109,22 +116,37 @@ public class CompilerView extends HorizontalLayout {
         
         HorizontalLayout editorHeaderLayout = new HorizontalLayout(codeEditorHeader);
         editorHeaderLayout.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
-    	
-        MenuBar compilerCommandBar = new MenuBar();
-        compilerCommandBar.addItem("Compile");
-        compilerCommandBar.addItem("Test");
-        compilerCommandBar.addItem("Mockup Button");
-        compilerCommandBar.addItem("Mockup Button");
-        compilerCommandBar.addItem("Mockup Button");
-        compilerCommandBar.addItem("Mockup Button");
+        
+        HorizontalLayout codeEditorButtonsLayout = new HorizontalLayout();
+        
+        Button compileAndRunButton = new Button("Compile&Run", new Icon(VaadinIcon.COMPILE));
+        compileAndRunButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        Button generateParseTreeButton = new Button("Generate Parse Tree", new Icon(VaadinIcon.TREE_TABLE));
+        generateParseTreeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        Button debugButton = new Button("Debug", new Icon(VaadinIcon.BUG));
+        debugButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        Button testButton = new Button("Test", new Icon(VaadinIcon.COGS));
+        testButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        Button explainSyntaxButton = new Button("Explain Syntax", new Icon(VaadinIcon.CLUSTER));
+        explainSyntaxButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        
+        codeEditorButtonsLayout.add(compileAndRunButton);
+        codeEditorButtonsLayout.add(generateParseTreeButton);
+        codeEditorButtonsLayout.add(debugButton);
+        codeEditorButtonsLayout.add(testButton);
+        codeEditorButtonsLayout.add(explainSyntaxButton);
         
         AceEditor codeEditor = new AceEditor();
     	codeEditor.setTheme(AceTheme.terminal);
-    	codeEditor.setMode(AceMode.sql);
-    	codeEditor.setValue("Mockup code");
+    	codeEditor.setMode(AceMode.java);
+    	codeEditor.setValue(UIConstants.DEFAULT_CODE_INPUT);
     	codeEditor.setSizeFull(); 
         
-    	VerticalLayout codeEditorLayout = new VerticalLayout(codeEditorHeader, compilerCommandBar, codeEditor);
+    	VerticalLayout codeEditorLayout = new VerticalLayout(codeEditorHeader, codeEditorButtonsLayout, codeEditor);
     	add(codeEditorLayout);
     	
     	UserInfo userInfo = new UserInfo(UUID.randomUUID().toString(), "User");
@@ -136,7 +158,7 @@ public class CompilerView extends HorizontalLayout {
         	MessageManager userMessageManager = new MessageManager(this, userInfo, chat.getCollaborationTopic());
         	MessageManager botMessageManager = new MessageManager(this, botInfo, chat.getCollaborationTopic());
         	
-        	botMessageManager.submit("Default mockup message");
+        	botMessageManager.submit(UIConstants.DEFAULT_HELP_MESSAGE);
         	
         	userMessageManager.setMessageHandler(context -> {
                 
@@ -149,7 +171,9 @@ public class CompilerView extends HorizontalLayout {
             		String sourceCode = codeEditor.getValue();
             		Request userRequest = new Request(sourceCode, text, Requests.types);
             		
-            		System.out.println("command: " + text.equals(Requests.COMPILE_AND_RUN));
+            		if(userRequest.equals(Requests.COMPILE_AND_RUN)) {
+            			
+            		}
             		
             		CompletableFuture<String> futureResponse = CompletableFuture.supplyAsync(() -> botService.handleRequest(userRequest));
             		futureResponse.thenAccept(response -> {
@@ -178,17 +202,28 @@ public class CompilerView extends HorizontalLayout {
         CollaborationMessageInput input = new CollaborationMessageInput(list);
         input.setWidthFull();
         
-        H3 chatAreaHeader = new H3("Output Area");
+        H3 chatAreaHeader = new H3("SlowLang Chat Bot");
         
-        MenuBar chatAreaCommandBar = new MenuBar();
-        chatAreaCommandBar.addItem("Run");
-        chatAreaCommandBar.addItem("Debug");
-        chatAreaCommandBar.addItem("Mockup Button");
-        chatAreaCommandBar.addItem("Mockup Button");
-        chatAreaCommandBar.addItem("Mockup Button");
-        chatAreaCommandBar.addItem("Mockup Button");
+        HorizontalLayout chatAreaButtonsLayout = new HorizontalLayout();
         
-        VerticalLayout chatContainer = new VerticalLayout(chatAreaHeader, chatAreaCommandBar);
+        Button displayCommandsButton = new Button("Display Available Commands", new Icon(VaadinIcon.COMPILE));
+        displayCommandsButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+        
+        Button generateVerboseLog = new Button("Generate Verbose Log", new Icon(VaadinIcon.TREE_TABLE));
+        generateVerboseLog.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+        
+        Button configureButton = new Button("Configure", new Icon(VaadinIcon.COGS));
+        configureButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+        
+        Button clearButton = new Button("Clear", new Icon(VaadinIcon.COGS));
+        clearButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+        
+        chatAreaButtonsLayout.add(displayCommandsButton);
+        chatAreaButtonsLayout.add(generateVerboseLog);
+        chatAreaButtonsLayout.add(configureButton);
+        chatAreaButtonsLayout.add(clearButton);
+        
+        VerticalLayout chatContainer = new VerticalLayout(chatAreaHeader, chatAreaButtonsLayout);
         chatContainer.addClassNames(Flex.AUTO, Overflow.HIDDEN);
         chatContainer.add(list, input);
         chatContainer.addClassName("bg-contrast-5");
