@@ -1,38 +1,25 @@
 package com.slowlang.service;
 
-import org.springframework.scheduling.annotation.AsyncResult;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
-import org.springframework.util.concurrent.ListenableFuture;
+
+import execution_engine.ChainedVM;
+import execution_engine.MemoryManager;
 
 @Service
 public class ExecutionEngineService {
 	
-	public String execute(byte[] bytecode) {
-		
-		try {
-			
-			Thread.sleep(2000);
-		
-		} catch (InterruptedException e) {
-			
-			e.printStackTrace();
-		}
-		
-		return "Mockup response";
-	}
 	
-	public ListenableFuture<String> executeAsync(byte[] bytecode) {
+	public String execute(byte[] programBytes) {
 		
-		try {
-			
-			Thread.sleep(2000);
+		MemoryManager memoryManager = new MemoryManager(programBytes, Constants.DEFAULT_PROGRAM_NAME);
+		ChainedVM vm = new ChainedVM(memoryManager);
+		vm.executeProgram();
 		
-		} catch (InterruptedException e) {
-			
-			return 	AsyncResult.forExecutionException(new RuntimeException("Error"));
-		}
+		List<String> log = ChainedVM.logger.getLog();
 		
-		return AsyncResult.forValue("Mockup async response");
-	}	
+		return log.toString();
+	}
 	
 }
